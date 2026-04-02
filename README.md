@@ -21,13 +21,19 @@ Se registran el **tiempo de respuesta** y la **tasa de aciertos** en cada condic
 
 ```
 seleccion-lexica/
-├── index.html          # Experimento completo (autocontenido, imágenes embebidas)
-├── README.md           # Este archivo
-├── EXPERIMENT.md       # Documentación científica detallada
-└── LICENSE             # Licencia de uso
+├── index.html              # Experimento (~21 KB)
+├── cuno/                   # Imágenes condición Conceptual
+│   ├── ensayos/            # 20 imágenes experimentales (1.png … 20.png)
+│   └── prueba/             # 4 imágenes de práctica (1.png … 4.png)
+├── cdos/                   # Imágenes condición Sintaxis
+│   ├── ensayos/            # 20 imágenes experimentales (1.png … 20.png)
+│   └── prueba/             # 4 imágenes de práctica (1.png … 4.png)
+├── README.md               # Este archivo
+├── EXPERIMENT.md           # Documentación científica detallada
+└── LICENSE                 # Licencia de uso
 ```
 
-> **Nota:** `index.html` es un archivo autocontenido (~38 MB). Todas las imágenes de los estímulos están embebidas en Base64 y no se necesitan archivos externos para ejecutarlo.
+> **Nota:** `index.html` carga las imágenes desde las carpetas `cuno/` y `cdos/` mediante rutas relativas. Es necesario mantener la estructura de carpetas intacta. Para ejecutarlo localmente, abre el archivo desde un servidor local o directamente desde GitHub Pages (ver más abajo).
 
 ---
 
@@ -35,9 +41,14 @@ seleccion-lexica/
 
 ### Opción 1: Directamente en el navegador
 
-1. Descarga `index.html`.
-2. Ábrelo con cualquier navegador moderno (Chrome, Firefox, Edge, Safari).
-3. No requiere servidor ni conexión a internet.
+Dado que el experimento carga imágenes desde rutas relativas, necesita ejecutarse desde un servidor local o desde GitHub Pages. La forma más sencilla sin instalar nada es usar la extensión [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) de VS Code, o ejecutar desde la terminal:
+
+```bash
+# Python 3
+python -m http.server 8000
+```
+
+Luego abre `http://localhost:8000` en el navegador.
 
 ### Opción 2: GitHub Pages
 
@@ -110,7 +121,8 @@ Al finalizar, el experimento muestra:
 ## Requisitos técnicos
 
 - Navegador web moderno con soporte para JavaScript ES6+
-- No requiere instalación, servidor web ni conexión a internet
+- Las imágenes deben estar en las carpetas `cuno/` y `cdos/` junto a `index.html`
+- Para uso local se recomienda un servidor local (Python, Live Server, etc.) — abrir el HTML directamente desde el sistema de archivos puede bloquear la carga de imágenes en algunos navegadores
 - Compatible con Windows, macOS y Linux
 - Resolución de pantalla recomendada: 1024 × 768 o superior
 
