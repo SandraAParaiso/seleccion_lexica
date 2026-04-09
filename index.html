@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selección Léxica</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 860px;
+    min-height: 100vh;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .screen { display: none; width: 100%; flex-direction: column; align-items: center; gap: 2.5rem; }
+  .screen.active { display: flex; }
+
+  .inst-block { width: 100%; max-width: 720px; }
+  .inst-phase {
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 4px solid #000;
+    padding-bottom: 0.4rem;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+  .inst-heading {
+    font-size: 1.7rem;
+    font-weight: bold;
+    margin: 1rem 0 1.2rem 0;
+    line-height: 1.3;
+  }
+  .inst-body {
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: #000;
+  }
+  .inst-example {
+    margin-top: 1.2rem;
+    padding: 0.9rem 1.2rem;
+    border-left: 5px solid #000;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #000;
+  }
+  .key-guide {
+    margin-top: 1.8rem;
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .key-guide-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 1rem;
+    color: #000;
+  }
+  .key-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px; height: 48px;
+    border: 3px solid #000;
+    font-size: 1.3rem;
+    font-weight: bold;
+    font-family: Verdana, Geneva, sans-serif;
+  }
+  .btn {
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 1rem;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 0.9rem 3rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover { background: #222; }
+  .btn.secondary {
+    background: #fff;
+    color: #000;
+    border: 3px solid #000;
+  }
+  .btn.secondary:hover { background: #f0f0f0; }
+
+  #trial-screen {
+    position: fixed; inset: 0;
+    background: #ffffff;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  #trial-screen.active { display: flex; }
+
+  #trial-progress {
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 1rem;
+    color: #000;
+  }
+
+  #trial-area {
+    width: 560px;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  #fixation {
+    position: absolute;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #trial-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  #trial-keys-row {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+    visibility: hidden;
+  }
+  .t-key-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    width: 90px;
+    height: 90px;
+    border: 3px solid #000;
+    background: #fff;
+    cursor: pointer;
+    font-family: Verdana, Geneva, sans-serif;
+    padding: 0.5rem;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .t-key-btn:active, .t-key-btn.pressed { background: #000; color: #fff; }
+  .t-key-btn:active .t-key-num, .t-key-btn.pressed .t-key-num { color: #fff; }
+  .t-key-btn:active .t-key-label, .t-key-btn.pressed .t-key-label { color: #fff; }
+  .t-key-num {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+  }
+  .t-key-label { font-family: Verdana, Geneva, sans-serif; font-size: 0.85rem; color: #000; }
+
+  .results-heading {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #000;
+    text-align: center;
+    border-bottom: 4px solid #000;
+    padding-bottom: 0.6rem;
+  }
+  .results-table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: collapse;
+  }
+  .results-table th {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #000;
+    text-align: left;
+    padding: 0.8rem 1rem;
+    border-bottom: 3px solid #000;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .results-table td {
+    font-size: 1.1rem;
+    padding: 0.8rem 1rem;
+    color: #000;
+    border-bottom: 2px solid #000;
+  }
+  .results-table td.metric-value {
+    font-weight: bold;
+    font-size: 1.3rem;
+  }
+  .results-table tr:last-child td { border-bottom: none; }
+
+  .charts-wrap {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+  .chart-heading {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2.5rem;
+  }
+  .chart-svg-wrap { width: 100%; }
+  .chart-svg-wrap svg {
+    font-family: Verdana, Geneva, sans-serif;
+    overflow: visible;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="s-welcome">
+    <div class="inst-block">
+      <div class="inst-phase">Bienvenido/a</div>
+      <div class="inst-heading">Experimento de Selección Léxica</div>
+      <div class="inst-body">
+        Este experimento consta de <strong>dos fases</strong>.<br>
+        Antes de cada fase realizará una serie de <strong>ensayos de práctica</strong>
+        para familiarizarse con la tarea. Los datos de práctica no se registrarán.
+      </div>
+    </div>
+    <button class="btn" onclick="startFlow()">Comenzar</button>
+  </div>
+
+  <div class="screen" id="s-inst-p1">
+    <div class="inst-block">
+      <div class="inst-phase">Ensayos de práctica — Fase 1</div>
+      <div class="inst-heading">Instrucciones</div>
+      <div class="inst-body">
+        De todos los objetos con <strong>peso menor a 500&nbsp;gr</strong>,
+        pulse <strong>1</strong> si el que aparece se nombra en femenino.<br>
+        Si no, pulse <strong>0</strong>.
+        <div class="inst-example">
+          Ej: <em>'la pala'</em> → pulse <strong>1</strong><br>
+          Ej: <em>'el pelo'</em> → pulse <strong>0</strong>
+        </div>
+      </div>
+      <div class="key-guide">
+        <div class="key-guide-item"><div class="key-box">1</div> Sí (femenino + &lt;500&nbsp;gr)</div>
+        <div class="key-guide-item"><div class="key-box">0</div> No</div>
+      </div>
+    </div>
+    <button class="btn" id="btn-continue-p1" onclick="continueFlow('p1')">Continuar</button>
+  </div>
+
+  <div class="screen" id="s-inst-exp1">
+    <div class="inst-block">
+      <div class="inst-phase">Fase 1</div>
+      <div class="inst-heading">Instrucciones</div>
+      <div class="inst-body">
+        De todos los objetos con <strong>peso menor a 500&nbsp;gr</strong>,
+        pulse <strong>1</strong> si el que aparece se nombra en femenino.<br>
+        Si no, pulse <strong>0</strong>.
+        <div class="inst-example">
+          Ej: <em>'la pala'</em> → pulse <strong>1</strong><br>
+          Ej: <em>'el pelo'</em> → pulse <strong>0</strong>
+        </div>
+      </div>
+      <div class="key-guide">
+        <div class="key-guide-item"><div class="key-box">1</div> Sí (femenino + &lt;500&nbsp;gr)</div>
+        <div class="key-guide-item"><div class="key-box">0</div> No</div>
+      </div>
+    </div>
+    <button class="btn" id="btn-continue-exp1" onclick="continueFlow('exp1')">Continuar</button>
+  </div>
+
+  <div class="screen" id="s-inst-p2">
+    <div class="inst-block">
+      <div class="inst-phase">Ensayos de práctica — Fase 2</div>
+      <div class="inst-heading">Instrucciones</div>
+      <div class="inst-body">
+        De todos los objetos con <strong>nombre femenino</strong>,
+        pulse <strong>1</strong> si el que aparece pesa menos de 500&nbsp;gramos.<br>
+        Si no, pulse <strong>0</strong>.
+        <div class="inst-example">
+          Ej: <em>'la pala'</em> → pulse <strong>1</strong><br>
+          Ej: <em>'la casa'</em> → pulse <strong>0</strong>
+        </div>
+      </div>
+      <div class="key-guide">
+        <div class="key-guide-item"><div class="key-box">1</div> Sí (femenino + &lt;500&nbsp;gr)</div>
+        <div class="key-guide-item"><div class="key-box">0</div> No</div>
+      </div>
+    </div>
+    <button class="btn" id="btn-continue-p2" onclick="continueFlow('p2')">Continuar</button>
+  </div>
+
+  <div class="screen" id="s-inst-exp2">
+    <div class="inst-block">
+      <div class="inst-phase">Fase 2</div>
+      <div class="inst-heading">Instrucciones</div>
+      <div class="inst-body">
+        De todos los objetos con <strong>nombre femenino</strong>,
+        pulse <strong>1</strong> si el que aparece pesa menos de 500&nbsp;gramos.<br>
+        Si no, pulse <strong>0</strong>.
+        <div class="inst-example">
+          Ej: <em>'la pala'</em> → pulse <strong>1</strong><br>
+          Ej: <em>'la casa'</em> → pulse <strong>0</strong>
+        </div>
+      </div>
+      <div class="key-guide">
+        <div class="key-guide-item"><div class="key-box">1</div> Sí (femenino + &lt;500&nbsp;gr)</div>
+        <div class="key-guide-item"><div class="key-box">0</div> No</div>
+      </div>
+    </div>
+    <button class="btn" id="btn-continue-exp2" onclick="continueFlow('exp2')">Continuar</button>
+  </div>
+
+  <div class="screen" id="s-results">
+    <div class="results-heading">Resultados</div>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Condición</th>
+          <th>TR promedio (ms)</th>
+          <th>Aciertos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Conceptual (Fase 1)</td>
+          <td class="metric-value" id="res-rt-c">—</td>
+          <td class="metric-value" id="res-acc-c">—</td>
+        </tr>
+        <tr>
+          <td>Sintaxis (Fase 2)</td>
+          <td class="metric-value" id="res-rt-s">—</td>
+          <td class="metric-value" id="res-acc-s">—</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="charts-wrap">
+      <div>
+        <div class="chart-heading">Tiempo de respuesta promedio (ms)</div>
+        <div class="chart-svg-wrap" id="chart-rt-wrap"></div>
+      </div>
+      <div>
+        <div class="chart-heading">Número de aciertos</div>
+        <div class="chart-svg-wrap" id="chart-acc-wrap"></div>
+      </div>
+    </div>
+    <button class="btn secondary" onclick="location.reload()">Repetir experimento</button>
+  </div>
+
+</div>
+
+<div id="trial-screen">
+  <div id="trial-progress"></div>
+  <div id="trial-area">
+    <div id="fixation">+</div>
+    <img id="trial-image" src="" alt="">
+  </div>
+  <div id="trial-keys-row">
+    <button class="t-key-btn" id="key-0" onclick="handleTrialResponse(0)">
+      <span class="t-key-num">0</span>
+      <span class="t-key-label">No</span>
+    </button>
+    <button class="t-key-btn" id="key-1" onclick="handleTrialResponse(1)">
+      <span class="t-key-num">1</span>
+      <span class="t-key-label">Sí</span>
+    </button>
+  </div>
+</div>
+
+<script>
+const CONCEPTUAL_IMGS = ["cuno/ensayos/1.png", "cuno/ensayos/2.png", "cuno/ensayos/3.png", "cuno/ensayos/4.png", "cuno/ensayos/5.png", "cuno/ensayos/6.png", "cuno/ensayos/7.png", "cuno/ensayos/8.png", "cuno/ensayos/9.png", "cuno/ensayos/10.png", "cuno/ensayos/11.png", "cuno/ensayos/12.png", "cuno/ensayos/13.png", "cuno/ensayos/14.png", "cuno/ensayos/15.png", "cuno/ensayos/16.png", "cuno/ensayos/17.png", "cuno/ensayos/18.png", "cuno/ensayos/19.png", "cuno/ensayos/20.png"];
+const SINTAXIS_IMGS   = ["cdos/ensayos/1.png", "cdos/ensayos/2.png", "cdos/ensayos/3.png", "cdos/ensayos/4.png", "cdos/ensayos/5.png", "cdos/ensayos/6.png", "cdos/ensayos/7.png", "cdos/ensayos/8.png", "cdos/ensayos/9.png", "cdos/ensayos/10.png", "cdos/ensayos/11.png", "cdos/ensayos/12.png", "cdos/ensayos/13.png", "cdos/ensayos/14.png", "cdos/ensayos/15.png", "cdos/ensayos/16.png", "cdos/ensayos/17.png", "cdos/ensayos/18.png", "cdos/ensayos/19.png", "cdos/ensayos/20.png"];
+const PRUEBA_UNO_IMGS = ["cuno/prueba/1.png", "cuno/prueba/2.png", "cuno/prueba/3.png", "cuno/prueba/4.png"];
+const PRUEBA_DOS_IMGS = ["cdos/prueba/1.png", "cdos/prueba/2.png", "cdos/prueba/3.png", "cdos/prueba/4.png"];
+const CONCEPTUAL_CORRECT = [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1];
+const SINTAXIS_CORRECT   = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+const PRUEBA_RPUNO = [0, 1, 0, 0];
+const PRUEBA_RPDOS = [0, 1, 0, 0];
+
+const results = {
+  conceptual: { rts: [], correct: 0 },
+  sintaxis:   { rts: [], correct: 0 }
+};
+
+let awaitingResponse = false;
+let stimulusOnset = 0;
+let trialPhase, trialImages, trialCorrect, trialIndex, trialCallback;
+let isPractice = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let pendingContinue = null;
+
+function continueFlow(step) {
+  if (pendingContinue) {
+    const cb = pendingContinue;
+    pendingContinue = null;
+    cb();
+  }
+}
+
+function waitForContinue(cb) {
+  pendingContinue = cb;
+}
+
+function startFlow() {
+  showScreen('s-inst-p1');
+  waitForContinue(() => {
+    launchTrials('prueba1', PRUEBA_UNO_IMGS, PRUEBA_RPUNO, true, () => {
+      showScreen('s-inst-exp1');
+      waitForContinue(() => {
+        launchTrials('conceptual', CONCEPTUAL_IMGS, CONCEPTUAL_CORRECT, false, () => {
+          showScreen('s-inst-p2');
+          waitForContinue(() => {
+            launchTrials('prueba2', PRUEBA_DOS_IMGS, PRUEBA_RPDOS, true, () => {
+              showScreen('s-inst-exp2');
+              waitForContinue(() => {
+                launchTrials('sintaxis', SINTAXIS_IMGS, SINTAXIS_CORRECT, false, showResults);
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+function launchTrials(phase, images, correct, practice, callback) {
+  trialPhase = phase;
+  trialImages = images;
+  trialCorrect = correct;
+  trialIndex = 0;
+  trialCallback = callback;
+  isPractice = practice;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('trial-screen').classList.add('active');
+
+  const keysRow = document.getElementById('trial-keys-row');
+  const progress = document.getElementById('trial-progress');
+  keysRow.style.display = isPractice ? 'flex' : 'none';
+  keysRow.style.visibility = 'hidden';
+  progress.style.display = isPractice ? 'block' : 'none';
+
+  runTrial();
+}
+
+function runTrial() {
+  if (trialIndex >= trialImages.length) {
+    document.getElementById('trial-screen').classList.remove('active');
+    trialCallback();
+    return;
+  }
+
+  const imgEl   = document.getElementById('trial-image');
+  const fixEl   = document.getElementById('fixation');
+  const keysRow = document.getElementById('trial-keys-row');
+  const progress = document.getElementById('trial-progress');
+
+  if (isPractice) {
+    progress.textContent = (trialIndex + 1) + ' / ' + trialImages.length;
+  }
+
+  imgEl.style.display = 'none';
+  imgEl.src = '';
+  fixEl.style.display = 'flex';
+  keysRow.style.visibility = 'hidden';
+  awaitingResponse = false;
+
+  // Preload image
+  const preload = new Image();
+  preload.src = trialImages[trialIndex];
+
+  setTimeout(() => {
+    fixEl.style.display = 'none';
+    imgEl.src = trialImages[trialIndex];
+    imgEl.style.display = 'block';
+    if (isPractice) keysRow.style.visibility = 'visible';
+    stimulusOnset = performance.now();
+    awaitingResponse = true;
+  }, 500);
+}
+
+function handleTrialResponse(key) {
+  if (!awaitingResponse) return;
+
+  const rt  = performance.now() - stimulusOnset;
+  awaitingResponse = false;
+
+  if (isPractice) {
+    const keyEl = document.getElementById('key-' + key);
+    keyEl.classList.add('pressed');
+    setTimeout(() => keyEl.classList.remove('pressed'), 150);
+  }
+
+  const isCorrect = (key === trialCorrect[trialIndex]);
+  if (trialPhase === 'conceptual') {
+    results.conceptual.rts.push(rt);
+    if (isCorrect) results.conceptual.correct++;
+  } else if (trialPhase === 'sintaxis') {
+    results.sintaxis.rts.push(rt);
+    if (isCorrect) results.sintaxis.correct++;
+  }
+
+  trialIndex++;
+  setTimeout(runTrial, 250);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === '0') handleTrialResponse(0);
+  else if (e.key === '1') handleTrialResponse(1);
+});
+
+function showResults() {
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+  const rtC  = avg(results.conceptual.rts);
+  const rtS  = avg(results.sintaxis.rts);
+  const accC = results.conceptual.correct;
+  const accS = results.sintaxis.correct;
+
+  document.getElementById('res-rt-c').textContent  = rtC  + ' ms';
+  document.getElementById('res-rt-s').textContent  = rtS  + ' ms';
+  document.getElementById('res-acc-c').textContent = accC + ' / 20';
+  document.getElementById('res-acc-s').textContent = accS + ' / 20';
+
+  buildSVGChart('chart-rt-wrap',
+    [{label:'Conceptual', value: rtC}, {label:'Sintaxis', value: rtS}],
+    Math.max(rtC, rtS, 1), 'Condición experimental', 'Tiempo de respuesta (ms)', ' ms');
+
+  buildSVGChart('chart-acc-wrap',
+    [{label:'Conceptual', value: accC}, {label:'Sintaxis', value: accS}],
+    20, 'Condición experimental', 'Número de aciertos', '');
+
+  showScreen('s-results');
+}
+
+function buildSVGChart(wrapperId, bars, maxVal, xAxisLabel, yAxisLabel, unit) {
+  const W = 600, H = 340;
+  const marginL = 90, marginR = 30, marginT = 20, marginB = 80;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+
+  const tickStep = niceNumber(niceNumber(maxVal * 1.15) / 5, true);
+  const tickCount = 5;
+  const yMax = tickStep * tickCount;
+
+  const barW = 80;
+  const barSpacing = (plotW - bars.length * barW) / (bars.length + 1);
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', H);
+
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('transform', 'translate(' + marginL + ',' + marginT + ')');
+  svg.appendChild(g);
+
+  svgLine(g, 0, 0, 0, plotH, '#000', 2);
+  svgLine(g, 0, plotH, plotW, plotH, '#000', 2);
+
+  for (let i = 0; i <= tickCount; i++) {
+    const val = i * tickStep;
+    const y = plotH - (val / yMax) * plotH;
+    svgLine(g, -6, y, 0, y, '#000', 2);
+    svgText(g, -10, y + 4, Math.round(val) + unit, '#000', 'end', '14px');
+  }
+
+  bars.forEach((b, i) => {
+    const x   = barSpacing + i * (barW + barSpacing);
+    const barH = yMax > 0 ? (b.value / yMax) * plotH : 0;
+    const barY = plotH - barH;
+
+    svgRect(g, x, barY, barW, barH, '#000');
+    svgText(g, x + barW / 2, barY - 8, Math.round(b.value) + unit, '#000', 'middle', '15px', 'bold');
+    svgLine(g, x + barW / 2, plotH, x + barW / 2, plotH + 6, '#000', 2);
+    svgText(g, x + barW / 2, plotH + 22, b.label, '#000', 'middle', '15px');
+  });
+
+  svgText(g, plotW / 2, plotH + 58, xAxisLabel, '#000', 'middle', '14px', 'bold');
+
+  const yl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  yl.setAttribute('transform', 'translate(' + (-marginL + 16) + ',' + (plotH / 2) + ') rotate(-90)');
+  yl.setAttribute('text-anchor', 'middle');
+  yl.setAttribute('font-size', '14px');
+  yl.setAttribute('font-weight', 'bold');
+  yl.setAttribute('font-family', 'Verdana, Geneva, sans-serif');
+  yl.setAttribute('fill', '#000');
+  yl.textContent = yAxisLabel;
+  g.appendChild(yl);
+
+  document.getElementById(wrapperId).innerHTML = '';
+  document.getElementById(wrapperId).appendChild(svg);
+}
+
+function svgLine(p, x1, y1, x2, y2, stroke, sw) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  el.setAttribute('x1',x1); el.setAttribute('y1',y1);
+  el.setAttribute('x2',x2); el.setAttribute('y2',y2);
+  el.setAttribute('stroke',stroke); el.setAttribute('stroke-width',sw);
+  p.appendChild(el);
+}
+function svgRect(p, x, y, w, h, fill) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  el.setAttribute('x',x); el.setAttribute('y',y);
+  el.setAttribute('width',w); el.setAttribute('height',Math.max(h,0));
+  el.setAttribute('fill',fill);
+  p.appendChild(el);
+}
+function svgText(p, x, y, content, fill, anchor, size, weight) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  el.setAttribute('x',x); el.setAttribute('y',y);
+  el.setAttribute('fill', fill||'#000');
+  el.setAttribute('text-anchor', anchor||'middle');
+  el.setAttribute('font-size', size||'14px');
+  el.setAttribute('font-family','Verdana, Geneva, sans-serif');
+  if (weight) el.setAttribute('font-weight', weight);
+  el.textContent = content;
+  p.appendChild(el);
+}
+function niceNumber(val, round) {
+  const exp = Math.floor(Math.log10(val));
+  const f   = val / Math.pow(10, exp);
+  let nice;
+  if (round) {
+    if (f < 1.5) nice = 1;
+    else if (f < 3) nice = 2;
+    else if (f < 7) nice = 5;
+    else nice = 10;
+  } else {
+    if (f <= 1) nice = 1;
+    else if (f <= 2) nice = 2;
+    else if (f <= 5) nice = 5;
+    else nice = 10;
+  }
+  return nice * Math.pow(10, exp);
+}
+</script>
+</body>
+</html>
